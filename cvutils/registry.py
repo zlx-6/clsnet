@@ -61,6 +61,10 @@ class Registry:
     def __len__(self):
         return len(self._module_dict)  
 
+    @property
+    def name(self):
+        return self._name
+
     @staticmethod
     def infer_scope():
         """Infer the scope of registry.
