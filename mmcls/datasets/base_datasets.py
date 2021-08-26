@@ -1,6 +1,6 @@
 from numpy.lib.function_base import average
 import torch
-import torch.nn as nn
+import torch as nn
 from torch.utils.data import Dataset
 import copy
 import numpy as np
@@ -26,7 +26,7 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
 
     
     @abstractclassmethod
-    def load_annotations():#具体数据集需要实现
+    def load_annotations(self):#具体数据集需要实现
         pass
 
     def __getitem__(self, index):
