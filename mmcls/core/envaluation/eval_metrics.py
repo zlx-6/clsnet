@@ -1,6 +1,7 @@
 from numbers import Number
 
 import numpy as np
+from numpy.lib.function_base import average
 import torch
 
 def calculate_confusion_matrix(pred,target):
@@ -26,5 +27,16 @@ def calculate_confusion_matrix(pred,target):
 
     return confusion_matrix
 
+def support(pred, target,average_mode='macro'):
 
-    
+    confusion_matrix = calculate_confusion_matrix(pred,target)
+    with torch.no_grad():
+        #计算每个类别有多少张
+        res = confusion_matrix.sum(1)
+        if average_mode =='macro':
+            res = float(res.sum().numpy())
+        elif average_mode == 'none':
+            res = res.numpy()
+        
+    return res
+
