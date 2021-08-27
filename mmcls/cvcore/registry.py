@@ -86,27 +86,8 @@ class Registry:
         filename = inspect.getmodule(inspect.stack()[2][0]).__name__#'__main__'
         split_filename = filename.split('.')#['__main__']
         return split_filename[0]#'__main__'
-
-    def get(self,key):
-
-        scope, real_key = self.split_score_key(key)
-
-        if scope is None or scope == self._scope:
-            if real_key in self.__module_dict:
-                return self._module_dict[real_key]
-        else:
-            # get from self._children
-            if scope in self._children:
-                return self._children[scope].get(real_key)
-            else:
-                # goto root
-                parent = self.parent
-                while parent.parent is not None:
-                    parent = parent.parent
-                return parent.get(key) 
-
     @staticmethod
-    def split_scope_key(key):
+    def split_score_key(key):
         """Split scope and key.
 
         The first scope will be split from key.
@@ -138,6 +119,26 @@ class Registry:
                 raise KeyError(f'{name} is already registered '
                                f'in {self.name}')
             self._module_dict[name] = module_class
+
+    def get(self,key):
+
+        scope, real_key = self.split_score_key(key)
+
+        if scope is None or scope == self._scope:
+            if real_key in self._module_dict:
+                return self._module_dict[real_key]
+        else:
+            # get from self._children
+            if scope in self._children:
+                return self._children[scope].get(real_key)
+            else:
+                # goto root
+                parent = self.parent
+                while parent.parent is not None:
+                    parent = parent.parent
+                return parent.get(key) 
+
+    
 
     def register_module(self,name=None,force=None,module = None):
 
