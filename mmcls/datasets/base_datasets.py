@@ -1,4 +1,4 @@
-from numpy.lib.function_base import average
+#from numpy.lib.function_base import average
 import torch
 import torch as nn
 from torch.utils.data import Dataset
@@ -18,11 +18,11 @@ class BaseDataset(Dataset, metaclass=ABCMeta):
         super(BaseDataset, self).__init__()
 
         self.ann_file = ann_file
-        self.data_prefix = data_prefix
+        self.data_prefix = data_prefix#'data\\cifar10'
         self.test_mode = test_mode
         self.pipeline = Compose(pipeline)
-        self.CLASSES = self.get_classes(classes)
-        self.data_infos = self.load_annotations()
+        self.CLASSES = self.get_classes(classes)#None
+        self.data_infos = self.load_annotations()#{img,}
 
     
     @abstractclassmethod
