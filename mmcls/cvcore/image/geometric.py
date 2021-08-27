@@ -95,3 +95,13 @@ def impad(img,*,shape=None,padding=None,pad_val=0,padding_mode='constant'):
         value=pad_val)#(32, 32, 3)-->(40, 40, 3)
 
     return img
+
+def imflip(img,direction='horizontal'):
+
+    assert direction in ['horizontal','vertical','duagonal']
+    if direction == 'horizontal':
+        return np.flip(img,axis = 1)
+    elif direction == 'vertical':
+        return np.flip(img, axis=0)
+    else:
+        return np.flip(img, axis=(0, 1))

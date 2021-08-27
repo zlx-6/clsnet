@@ -6,16 +6,17 @@ class Compose(object):
 
     def __init__(self,transforms):
         self.transforms = []
-        if transforms is not None:
-            for transform in transforms:
-                if isinstance(transform,dict):
-                    build_from_cfg(transform,PIPELINES)#第二个参数是从哪个Register里面取dict_modules，Register下会注册许多modules
-                    self.transforms.append(transform)
-                elif callable(transform):
-                    self.transforms.append(transform)
+       
+        for transform in transforms:
+            if isinstance(transform,dict):
+                transform=build_from_cfg(transform,PIPELINES)#第二个参数是从哪个Register里面取dict_modules，Register下会注册许多modules
+                self.transforms.append(transform)
+            elif callable(transform):
+                self.transforms.append(transform)
 
 
-    def call(self,data):
+    def __call__(self,data):
+        #print(self.transforms)
         for t in self.transforms:
             data = t(data)
             if data is None:

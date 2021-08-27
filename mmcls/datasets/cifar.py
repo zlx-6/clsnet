@@ -56,19 +56,19 @@ class CIFAR10(BaseDataset):
             file_path = os.path.join(self.data_prefix,self.base_folder,file_name)
             with open(file_path,'rb') as f:
                 entry = pickle.load(f,encoding='latin1')
-                self.imgs.append(entry['data'])
+                self.imgs.append(entry['data'])#[array[(10000, 3072)]*5]
                 if 'labels' in entry:
-                    self.gt_labels.append(entry['labels'])
+                    self.gt_labels.extend(entry['labels'])#这里要用entend，找了半天没看出来。.,
                 else:
                     self.gt_labels.extend(entry['fine_labels'])  
-        self.imgs = np.vstack(self.imgs).reshape(-1,3,32,32)  
-        self.imgs = self.imgs.transpose((0, 2, 3, 1))  # convert to HWC
+        self.imgs = np.vstack(self.imgs).reshape(-1,3,32,32)#array[(50000, 3, 32, 32)] 
+        self.imgs = self.imgs.transpose((0, 2, 3, 1))  # convert to HWC#(50000, 32, 32, 3)
 
         self._load_meta()
         data_infos = []
-        for img, gt_label in zip(self.imgs, self.gt_labels):
+        for img, gt_label in zip(self.imgs, self.gt_labels):#self.imgs:(50000, 32, 32, 3)
             gt_label = np.array(gt_label, dtype=np.int64)
-            info = {'img': img, 'gt_label': gt_label}
+            info = {'img': img, 'gt_label': gt_label}#图片只取了一张，但是标签取了每个batch的
             data_infos.append(info)
         return data_infos
 
@@ -92,7 +92,19 @@ class CIFAR10(BaseDataset):
                 return False
         return True
     
-
-
 if __name__ =="__main__":
-    CIFAR10('data\cifar10',None,None)
+    img_norm_cfg = dict(
+    mean=[125.307, 122.961, 113.8575],
+    std=[51.5865, 50.847, 51.255],
+    to_rgb=False)
+    pipeline = [dict(type ='RandomCrop',size=32, padding=4),
+                dict(type='RandomFlip', flip_prob=0.5, direction='horizontal'),
+                dict(type='Normalize', **img_norm_cfg),
+                dict(type='ImageToTensor', keys=['img']),
+                dict(type='ToTensor', keys=['gt_label']),
+                dict(type='Collect', keys=['img', 'gt_label'])]
+    m=CIFAR10('data\cifar10',pipeline,None)
+    print(len(m))
+    for i in m:
+        print(i)
+        break

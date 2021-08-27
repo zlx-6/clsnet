@@ -1,6 +1,6 @@
-from mmcv.image.geometric import imcrop
+import torch
 from mmcls.datasets.builder import PIPELINES
-from mmcls.cvcore.image import impad,imcrop,imflip
+from mmcls.cvcore.image import impad,imcrop,imflip,imnormalize
 
 import numpy as np
 import random
@@ -86,3 +86,25 @@ class RandomFlip(object):
 
     def __repr__(self):
         return self.__class__.__name__+f'flip_prob = {self.flip_prob}'
+
+@PIPELINES.register_module()
+class Normalize(object):
+
+    def __init__(self,mean,std,to_rgb=True) -> None:
+        self.mean = np.array(mean,dtype=np.float32)
+        self.std = np.array(std,dtype=np.float32)
+        self.to_rgb = to_rgb
+    
+    def __call__(self,results):
+        for key in results.get('img_fields',['img']):
+            results[key] = imnormalize(results[key],self.mean,self.std,self.to_rgb)
+        results['img_norm_cfg'] = dict(
+            mean=self.mean, std=self.std, to_rgb=self.to_rgb)
+        return results
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(mean={list(self.mean)}, '
+        repr_str += f'std={list(self.std)}, '
+        repr_str += f'to_rgb={self.to_rgb})'
+        return repr_str
