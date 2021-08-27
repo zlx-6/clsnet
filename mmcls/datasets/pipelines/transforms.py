@@ -1,6 +1,6 @@
 from mmcv.image.geometric import imcrop
 from mmcls.datasets.builder import PIPELINES
-from mmcls.cvcore.image import impad,imcrop
+from mmcls.cvcore.image import impad,imcrop,imflip
 
 import numpy as np
 import random
@@ -61,4 +61,28 @@ class RandomCrop(object):
                     ymin + height - 1,
                 ]))
         return results
+
+    def __repr__(self):
+        return (self.__class__.__name__ + f'(size = {self.size}, padding = {self.padding})')
+
+@PIPELINES.register_module()
+class RandomFlip(object):
+
+    def __init__(self,flip_prob=0.5,direction='horizontal') -> None:
+        assert 0<=flip_prob<=1
+        assert direction in ['horizontal','vertical']
+        self.flip_prob = flip_prob
+        self.direction = direction
+
+    def __call__(self,results):
         
+        flip =True if np.random.rand() < self.flip_prob else False
+        results['flip'] = flip
+        results['flip_direction'] = self.direction
+        if results['flip']:
+            for key in results.get('img_fields',['img']):
+                results[key] = imflip(results[key],direction=results['flip_direction'])
+        return results
+
+    def __repr__(self):
+        return self.__class__.__name__+f'flip_prob = {self.flip_prob}'
