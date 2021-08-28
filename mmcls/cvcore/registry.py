@@ -108,6 +108,22 @@ class Registry:
         else:
             return None, key
 
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def scope(self):
+        return self._scope
+
+    @property
+    def module_dict(self):
+        return self._module_dict
+
+    @property
+    def children(self):
+        return self._children
+
     def _register_module(self, module_class, module_name = None, force=False):
         if module_name is None:
             module_name = module_class.__name__
@@ -155,6 +171,30 @@ class Registry:
             return cls
 
         return _register
+
+    def build(self, *args, **kwargs):
+        return self.build_func(*args, **kwargs, registry=self)
+
+    def _add_children(self, registry):
+        """Add children for a registry.
+
+        The ``registry`` will be added as children based on its scope.
+        The parent registry could build objects from children registry.
+
+        Example:
+            >>> models = Registry('models')
+            >>> mmdet_models = Registry('models', parent=models)
+            >>> @mmdet_models.register_module()
+            >>> class ResNet:
+            >>>     pass
+            >>> resnet = models.build(dict(type='mmdet.ResNet'))
+        """
+
+        assert isinstance(registry, Registry)
+        assert registry.scope is not None
+        assert registry.scope not in self.children, \
+            f'scope {registry.scope} exists in {self.name} registry'
+        self.children[registry.scope] = registry
 
 if __name__ == "__main__":
     Registry('reg')

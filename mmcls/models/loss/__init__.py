@@ -1,3 +1,3 @@
-from .accuracy import accuracy
+from .accuracy import accuracy,Accuracy
 
-__all__ = ['accuracy']
+__all__ = ['accuracy','Accuracy']

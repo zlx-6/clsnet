@@ -1,6 +1,7 @@
 from mmcls import cvcore
 import torch
 import numpy as np
+import torch.nn as nn
 from numbers import Number
 
 def accuracy_torch(pred,target,topk,thrs):
@@ -45,4 +46,29 @@ def accuracy(pred,target,topk=1,thrs=.0):
         res = accuracy_torch(pred,target,topk,thrs)
     
     return res[0] if return_single else res
-    
+
+
+
+class Accuracy(nn.Module):
+
+    def __init__(self, topk=(1, )):
+        """Module to calculate the accuracy.
+
+        Args:
+            topk (tuple): The criterion used to calculate the
+                accuracy. Defaults to (1,).
+        """
+        super().__init__()
+        self.topk = topk
+
+    def forward(self, pred, target):
+        """Forward function to calculate accuracy.
+
+        Args:
+            pred (torch.Tensor): Prediction of models.
+            target (torch.Tensor): Target for each prediction.
+
+        Returns:
+            list[float]: The accuracies under different topk criterions.
+        """
+        return accuracy(pred, target, self.topk)
