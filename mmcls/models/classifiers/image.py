@@ -57,4 +57,7 @@ class ImageClassifier(BaseClassifier):
                     cfg['type'] = 'BatchCutMix'
                     cfg['prob'] = cutmix_prob
                     self.augments = Augments(cfg)
+    def extract_feat(self,img):
+        imgs=1
+        return imgs
 

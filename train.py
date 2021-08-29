@@ -1,16 +1,17 @@
-import mmcv 
+import copy
 import os
 import os.path as osp
 import argparse
-from mmcv.utils.misc import import_modules_from_strings
 import torch
 import time
 
 #mmcv.Config
 from mmcls.cvcore.utils import DictAction,Config,mkdir_or_exist
 from mmcls.utils import get_root_logger,collect_env
-from mmcls.apis import set_random_seed
+from mmcls.apis import set_random_seed,train_model
 from mmcls.models import build_classifier
+from mmcls.datasets import build_dataset
+
 
 
 def parse_args():
@@ -113,8 +114,30 @@ def main():
     meta['seed'] = args.seed
 
     model = build_classifier(cfg.model)
+    model.init_weights()
 
-
+    datasets = [build_dataset(cfg.data.train)]
+    if len(cfg.workflow) == 2:
+        val_dataset = copy.deepcopy(cfg.data.val)
+        val_dataset.pipeline = cfg.data.train.pipeline
+        datasets.append(build_dataset(val_dataset))
+    if cfg.checkpoint_config is not None:
+        #print('111')
+        cfg.checkpoint_config.meat = dict(
+            clsnet_version = '0.0.1',
+            config = cfg.pretty_text,
+            CLASSES =datasets[0].CLASSES
+        )
+        #print(cfg.checkpoint_config.meat)
+    train_model(
+        model,
+        datasets,
+        cfg,
+        distributed=distributed,
+        validate=(not args.no_validate),
+        timestamp=timestamp,
+        device='cpu', #if args.device == 'cpu' else 'cuda',
+        meta=meta)
 
 
 if __name__=='__main__':

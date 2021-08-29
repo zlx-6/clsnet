@@ -1,5 +1,7 @@
 from mmcls.models import BACKBONES 
 from mmcls.models.backbone import BaseBackbone
+from mmcls.models.utils import InvertedResidual
+from mmcls.cvcore.cnn.bricks import ConvModule
 
 
 
@@ -48,7 +50,7 @@ class MobileNetV3(BaseBackbone):
                     dict(
                         type='Kaiming',
                         layer=['Conv2d'],
-                        nolinearity='leaky_relu'),
+                        nonlinearity='leaky_relu'),
                     dict(type='Normal',layer=['Linear'],std=0.01),
                     dict(type='Constant',layer=['BatchNorm2d'],val=1)
                 ]):
@@ -72,4 +74,66 @@ class MobileNetV3(BaseBackbone):
         self.feat_dim = self.arch_settings[arch][-1][1]
 
     def _make_layer(self):
-        pass
+        layers = []
+        layer_setting = self.arch_settings[self.arch]
+        in_channels = 16
+
+        layer = ConvModule(in_channels=3,out_channels=in_channels,
+                            kernel_size=3,stride=2,padding=1,conv_cfg=self.conv_cfg,
+                            norm_cfg=self.norm_cfg,act_cfg=dict(type='HSwish'))
+
+        self.add_module('layer0',layer)
+        layers.append('layer0')
+
+        for i, params in enumerate(layer_setting):
+            (kernel_size, mid_channels, out_channels, with_se, act,
+             stride) = params
+            if with_se:
+                se_cfg = dict(
+                    channels=mid_channels,
+                    ratio=4,
+                    act_cfg=(dict(type='ReLU'),
+                             dict(
+                                 type='HSigmoid',
+                                 bias=3,
+                                 divisor=6,
+                                 min_value=0,
+                                 max_value=1)))
+            else:
+                se_cfg = None
+
+            layer = InvertedResidual(
+                in_channels=in_channels,#16
+                out_channels=out_channels,#24
+                mid_channels=mid_channels,#72
+                kernel_size=kernel_size,#3
+                stride=stride,#2
+                se_cfg=se_cfg,#True
+                conv_cfg=self.conv_cfg,#
+                norm_cfg=self.norm_cfg,#
+                act_cfg=dict(type=act),#
+                with_cp=self.with_cp)
+            in_channels = out_channels
+            layer_name = 'layer{}'.format(i + 1)
+            self.add_module(layer_name, layer)
+            layers.append(layer_name)
+
+        # Build the last layer before pooling
+        # TODO: No dilation
+        layer = ConvModule(
+            in_channels=in_channels,
+            out_channels=576 if self.arch == 'small' else 960,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=dict(type='HSwish'))
+        layer_name = 'layer{}'.format(len(layer_setting) + 1)
+        self.add_module(layer_name, layer)
+        layers.append(layer_name)
+
+        return layers
+
+
+        

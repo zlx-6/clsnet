@@ -14,7 +14,7 @@ from mmcls.core.envaluation import support,precision_recall_f1
 class BaseDataset(Dataset, metaclass=ABCMeta):
     CLASSES = None
 
-    def __init__(self, data_prefix, pipeline, classes, ann_file=None, test_mode=False):
+    def __init__(self, data_prefix, pipeline, classes=None, ann_file=None, test_mode=False):
         super(BaseDataset, self).__init__()
 
         self.ann_file = ann_file
