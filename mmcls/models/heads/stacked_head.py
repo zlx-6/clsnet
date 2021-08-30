@@ -87,3 +87,10 @@ class StackedLinearClsHead(ClsHead):
                 act_cfg=None))
     def init_weights(self):
         self.layers.init_weights()
+
+    def forward_train(self, x, gt_label):
+        cls_score = x
+        for layer in self.layers:
+            cls_score = layer(cls_score)
+        losses = self.loss(cls_score, gt_label)
+        return losses

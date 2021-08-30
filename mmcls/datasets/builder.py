@@ -1,4 +1,6 @@
-from mmcls.cvcore import Registry,build_from_cfg,get_dist_info,collate
+from mmcls.cvcore import Registry,build_from_cfg
+from mmcls.cvcore.runner import get_dist_info
+from mmcls.cvcore.parallel import collate
 
 from functools import partial
 from distutils.version import LooseVersion

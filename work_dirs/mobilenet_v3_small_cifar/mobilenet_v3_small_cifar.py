@@ -82,7 +82,12 @@ data = dict(
         test_mode=True))
 optimizer = dict(type='SGD', lr=0.1, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=None)
-lr_config = dict(policy='step', step=[120, 170])
+lr_config = dict(
+    policy='step',
+    step=[120, 170],
+    warmup='linear',
+    warmup_iters=500,
+    warmup_ratio=0.001)
 runner = dict(type='EpochBasedRunner', max_epochs=200)
 checkpoint_config = dict(interval=1)
 log_config = dict(interval=100, hooks=[dict(type='TextLoggerHook')])

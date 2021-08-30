@@ -3,7 +3,7 @@ from mmcls.models.backbone import BaseBackbone
 from mmcls.models.utils import InvertedResidual
 from mmcls.cvcore.cnn.bricks import ConvModule
 
-
+from torch.nn.modules.batchnorm import _BatchNorm
 
 @BACKBONES.register_module()
 class MobileNetV3(BaseBackbone):
@@ -134,6 +134,35 @@ class MobileNetV3(BaseBackbone):
         layers.append(layer_name)
 
         return layers
+
+    def forward(self,x):
+        outs = []
+        for i, layer_name in enumerate(self.layers):
+            layer = getattr(self, layer_name)
+            x = layer(x)
+            if i in self.out_indices:
+                outs.append(x)
+
+        if len(outs) == 1:
+            return outs[0]
+        else:
+            return tuple(outs)
+
+
+    def _freeze_stages(self):
+        for i in range(0, self.frozen_stages + 1):
+            layer = getattr(self, f'layer{i}')
+            layer.eval()
+            for param in layer.parameters():
+                param.requires_grad = False
+
+    def train(self, mode=True):
+        super(MobileNetV3, self).train(mode)
+        self._freeze_stages()
+        if mode and self.norm_eval:
+            for m in self.modules():
+                if isinstance(m, _BatchNorm):
+                    m.eval()
 
 
         

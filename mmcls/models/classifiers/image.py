@@ -58,6 +58,18 @@ class ImageClassifier(BaseClassifier):
                     cfg['prob'] = cutmix_prob
                     self.augments = Augments(cfg)
     def extract_feat(self,img):
-        imgs=1
-        return imgs
+        x = self.backbone(img)
+        if self.with_neck:
+            x = self.neck(x)
+        return x
 
+    def forward_train(self,img,gt_label,**kwargs):
+        if self.augments is not None:
+            img,gt_label = self.augments(img,gt_label)
+        
+        x = self.extract_feat(img)
+        losses = dict()
+        loss = self.head.forward_train(x,gt_label)
+        loss.update(loss)
+        
+        return loss

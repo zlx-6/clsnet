@@ -126,7 +126,7 @@ class BaseRunner(metaclass=ABCMeta):
         """int: Maximum training iterations."""
         return self._max_iters
 
-    #@abstractmethod
+    @abstractmethod
     def train(self):
         pass
 
@@ -134,7 +134,7 @@ class BaseRunner(metaclass=ABCMeta):
     def val(self):
         pass
 
-    #@abstractmethod
+    @abstractmethod
     def run(self, data_loaders, workflow, **kwargs):
         pass
 
@@ -190,7 +190,7 @@ class BaseRunner(metaclass=ABCMeta):
                 momentums[name] = _get_momentum(optim)
         return momentums
 
-    def register_hook(self,hook,priority='NORMAL'):#除了常用的外，其他都在这里注册
+    def register_hook(self,hook,priority='NORMAL'):#将用的hook根据优先级插入到self._hook中，优先级高的训练开启时先调用
         assert isinstance(hook,Hook)
         if hasattr(hook, 'priority'):
             raise ValueError('"priority" is a reserved attribute for hooks')
@@ -278,7 +278,7 @@ class BaseRunner(metaclass=ABCMeta):
                                  self.world_size)
                 self.logger.info('the iteration number is changed due to '
                                  'change of GPU number')
-
+        #设置优化器的参数
         if 'optimizer' in checkpoint and resume_optimizer:
             if isinstance(self.optimizer, Optimizer):
                 self.optimizer.load_state_dict(checkpoint['optimizer'])
@@ -307,7 +307,7 @@ class BaseRunner(metaclass=ABCMeta):
             # the string will not be changed if it contains capital letters.
             if policy_type == policy_type.lower():
                 policy_type = policy_type.title()
-            hook_type = policy_type + 'LrUpdaterHook'
+            hook_type = policy_type + 'LrUpdaterHook'#StepLrUpdaterHook
             lr_config['type'] = hook_type
             hook = build_from_cfg(lr_config, HOOKS)
         else:
@@ -384,23 +384,38 @@ class BaseRunner(metaclass=ABCMeta):
             hook = profiler_config
         self.register_hook(hook)
 
+    def register_custom_hooks(self, custom_config):
+        if custom_config is None:
+            return
+
+        if not isinstance(custom_config, list):
+            custom_config = [custom_config]
+
+        for item in custom_config:
+            if isinstance(item, dict):
+                self.register_hook_from_cfg(item)
+            else:
+                self.register_hook(item, priority='NORMAL')
+
     def register_training_hooks(self,
                                 lr_config,
                                 optimizer_config=None,
                                 checkpoint_config=None,
                                 log_config=None,
                                 momentum_config=None,
-                                timer_config=dict(type='IterTimerHook')):
+                                timer_config=dict(type='IterTimerHook'),
+                                custom_hooks_config=None):
         """Register default hooks for training.
 
-        Default hooks include:
-
-        - LrUpdaterHook
-        - MomentumUpdaterHook
-        - OptimizerStepperHook
-        - CheckpointSaverHook
-        - IterTimerHook
-        - LoggerHook(s)
+        Default and custom hooks include:
+          Hooks                 Priority
+        - LrUpdaterHook         10
+        - MomentumUpdaterHook   30
+        - OptimizerStepperHook  50
+        - CheckpointSaverHook   70
+        - IterTimerHook         80
+        - LoggerHook(s)         90
+        - CustomHook(s)         50 (default)
         """
         self.register_lr_hook(lr_config)
         self.register_momentum_hook(momentum_config)
@@ -408,8 +423,4 @@ class BaseRunner(metaclass=ABCMeta):
         self.register_checkpoint_hook(checkpoint_config)
         self.register_timer_hook(timer_config)
         self.register_logger_hooks(log_config)
-
-    
-
-            
-
+        self.register_custom_hooks(custom_hooks_config)

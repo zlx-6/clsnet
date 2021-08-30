@@ -1,6 +1,6 @@
 from mmcls.datasets.builder import DATASETS
 from mmcls.datasets.base_datasets import BaseDataset
-from mmcls.cvcore import get_dist_info
+from mmcls.cvcore.runner import get_dist_info
 from mmcls.datasets.utils import check_integrity,download_and_extract_archive
 
 import os

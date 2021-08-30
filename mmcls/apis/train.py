@@ -1,7 +1,8 @@
-from mmcls.datasets.builder import build_dataloader
+from mmcls.datasets.builder import build_dataloader, build_dataset
 from mmcls.cvcore.utils.logging import get_logger
 from mmcls.cvcore.parallel import MMDataParallel
 from mmcls.cvcore.runner import build_optimizer,build_runner
+from mmcls.cvcore.runner.evaluation import EvalHook
 
 import random
 import warnings
@@ -31,7 +32,7 @@ def train_model(model,dataset,cfg,distributed=False,validate=False,timestamp=Non
     
     dataset = dataset if isinstance(dataset,(tuple,list)) else [dataset]
     print(len(cfg.gpu_ids))
-    dataloader = [
+    data_loaders = [
         build_dataloader(ds,
                         cfg.data.samples_per_gpu,
                         cfg.data.workers_per_gpu,
@@ -69,4 +70,44 @@ def train_model(model,dataset,cfg,distributed=False,validate=False,timestamp=Non
                             work_dir=cfg.work_dir,
                             logger=logger,
                             meta=meta))
+    runner.timestamp = timestamp
+
+    #fp16的设置,这一部分先省略
+    fp16_cfg = cfg.get('fp16',None)
+    if fp16_cfg is not None:
+        pass
+    elif distributed and 'type' not in cfg.optimizer_config:#省略
+        optimizer_config = None
+    else:
+        optimizer_config = cfg.optimizer_config
     
+    #注册一些必要的hook
+    runner.register_training_hooks(
+        cfg.lr_config,
+        optimizer_config,
+        cfg.checkpoint_config,
+        cfg.log_config,
+        cfg.get('momentum_config',None),
+        custom_hooks_config=cfg.get('custom_hooks',None))
+
+    if distributed:
+        print('do not support distributed!, you must set the distributed is False')
+
+    if validate:
+        val_dataset = build_dataset(cfg.data.val,dict(test_mode=True))
+        val_dataloader = build_dataloader(
+            val_dataset,
+            samples_per_gpu=cfg.data.samples_per_gpu,
+            workers_per_gpu=cfg.data.workers_per_gpu,
+            dist=distributed,
+            shuffle=False,
+            round_up=True)
+        eval_cfg = cfg.get('evaluation', {})
+        eval_cfg['by_epoch'] = cfg.runner['type'] != 'IterBasedRunner'
+        eval_hook =  EvalHook
+        runner.register_hook(eval_hook(val_dataloader, **eval_cfg))
+    if cfg.resume_from:
+        runner.resume(cfg.resume_from)
+    elif cfg.load_from:
+        runner.load_checkpoint(cfg.load_from)
+    runner.run(data_loaders,cfg.workflow)    

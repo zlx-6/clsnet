@@ -14,7 +14,7 @@ import torch
 import torchvision
 from torch.optim import Optimizer
 from torch.utils import model_zoo
-import mmcv
+
 from mmcls.cvcore.utils import print_log
 from mmcls.cvcore.fileio import FileClient
 from mmcls.cvcore.fileio import load as load_file
