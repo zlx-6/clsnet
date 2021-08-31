@@ -2,9 +2,11 @@ from mmcls.models.heads import BaseHead,ClsHead
 from mmcls.models.builder import HEADS
 
 import torch.nn as nn
+import torch.nn.functional as F
 from typing import Dict, Sequence
 from mmcls.cvcore.runner import ModuleList,BaseModule
 from mmcls.cvcore.cnn import build_norm_layer,build_activation_layer
+
 
 class LinearBlock(BaseModule):
 
@@ -39,12 +41,33 @@ class LinearBlock(BaseModule):
             x = self.dropout(x)
         return x
 
+
 @HEADS.register_module()
 class StackedLinearClsHead(ClsHead):
-    
-    def __init__(self, num_classes,in_channels,mid_channels,dropout_rate=0.1,
-                 norm_cfg=None,act_cfg=dict(type = 'ReLU'),**kwargs ):
-        super(StackedLinearClsHead,self).__init__(**kwargs)
+    """Classifier head with several hidden fc layer and a output fc layer.
+
+    Args:
+        num_classes (int): Number of categories excluding the background
+            category.
+        in_channels (int): Number of channels in the input feature map.
+        mid_channels (Sequence): Number of channels in the hidden fc layers.
+        dropout_rate (float): Dropout rate after each hidden fc layer,
+            except the last layer. Defaults to 0.
+        norm_cfg (dict, optional): Config dict of normalization layer after
+            each hidden fc layer, except the last layer. Defaults to None.
+        act_cfg (dict, optional): Config dict of activation function after each
+            hidden layer, except the last layer. Defaults to use "ReLU".
+    """
+
+    def __init__(self,
+                 num_classes: int,
+                 in_channels: int,
+                 mid_channels: Sequence,
+                 dropout_rate: float = 0.,
+                 norm_cfg: Dict = None,
+                 act_cfg: Dict = dict(type='ReLU'),
+                 **kwargs):
+        super(StackedLinearClsHead, self).__init__(**kwargs)
         assert num_classes > 0, \
             f'`num_classes` of StackedLinearClsHead must be a positive ' \
             f'integer, got {num_classes} instead.'
@@ -67,7 +90,7 @@ class StackedLinearClsHead(ClsHead):
         self.layers = ModuleList(
             init_cfg=dict(
                 type='Normal', layer='Linear', mean=0., std=0.01, bias=0.))
-        in_channels =self.in_channels
+        in_channels = self.in_channels
         for hidden_channels in self.mid_channels:
             self.layers.append(
                 LinearBlock(
@@ -85,8 +108,20 @@ class StackedLinearClsHead(ClsHead):
                 dropout_rate=0.,
                 norm_cfg=None,
                 act_cfg=None))
+
     def init_weights(self):
         self.layers.init_weights()
+
+    def simple_test(self, img):
+        """Test without augmentation."""
+        cls_score = img
+        for layer in self.layers:
+            cls_score = layer(cls_score)
+        if isinstance(cls_score, list):
+            cls_score = sum(cls_score) / float(len(cls_score))
+        pred = F.softmax(cls_score, dim=1) if cls_score is not None else None
+
+        return self.post_process(pred)
 
     def forward_train(self, x, gt_label):
         cls_score = x
