@@ -6,6 +6,5 @@ I will add some networks as follows:
 - [ ] MobileNetV3
 - [ ] VGG
 - [ ] ResNet
-- [ ] Caspule Net 
 
 Because the resources limition, this repo will train the model on the cifar10.
