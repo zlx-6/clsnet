@@ -10,8 +10,8 @@
 }
 ```
 
-The result on cifar10:
+The results on cifar10:
 
-| Model | paras | FLOPS | top1 | toop5 | logfile | download |
+| Model | paras | FLOPS | top1 | top5 | logfile | download |
 |:-----------------:|:-------:|:-------:|:-------------------:|:--------------:|:------:|:------:|
 |ModelNetv3-small| | | 78.29 | 98.61 | | |
