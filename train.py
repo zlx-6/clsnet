@@ -136,7 +136,7 @@ def main():
         distributed=distributed,
         validate=(not args.no_validate),
         timestamp=timestamp,
-        device='cpu' if args.device == 'cpu' else 'cuda',
+        device='cpu', #if args.device == 'cpu' else 'cuda',
         meta=meta)
 
 

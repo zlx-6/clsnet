@@ -7,6 +7,26 @@ from torch.nn.modules.batchnorm import _BatchNorm
 
 @BACKBONES.register_module()
 class MobileNetV3(BaseBackbone):
+    """MobileNetV3 backbone.
+
+    Args:
+        arch (str): Architechture of mobilnetv3, from {small, large}.
+            Default: small.
+        conv_cfg (dict, optional): Config dict for convolution layer.
+            Default: None, which means using conv2d.
+        norm_cfg (dict): Config dict for normalization layer.
+            Default: dict(type='BN').
+        out_indices (None or Sequence[int]): Output from which stages.
+            Default: None, which means output tensors from final stage.
+        frozen_stages (int): Stages to be frozen (all param fixed).
+            Defualt: -1, which means not freezing any parameters.
+        norm_eval (bool): Whether to set norm layers to eval mode, namely,
+            freeze running stats (mean and var). Note: Effect on Batch Norm
+            and its variants only. Default: False.
+        with_cp (bool): Use checkpoint or not. Using checkpoint will save
+            some memory while slowing down the training speed.
+            Defualt: False.
+    """
     # Parameters to build each block:
     #     [kernel size, mid channels, out channels, with_se, act type, stride]
     arch_settings = {
@@ -36,32 +56,39 @@ class MobileNetV3(BaseBackbone):
                   [5, 672, 160, True, 'HSwish', 2],
                   [5, 960, 160, True, 'HSwish', 1],
                   [5, 960, 160, True, 'HSwish', 1]]
-    } 
+    }  # yapf: disable
 
     def __init__(self,
-                arch='small',
-                conv_cfg=None,
-                norm_cfg=dict(type ='BN',eps=0.001,momentum=0.01),
-                out_indices=None,
-                frozen_stages=-1,
-                norm_eval=False,
-                with_cp=False,
-                init_cfg = [
-                    dict(
-                        type='Kaiming',
-                        layer=['Conv2d'],
-                        nonlinearity='leaky_relu'),
-                    dict(type='Normal',layer=['Linear'],std=0.01),
-                    dict(type='Constant',layer=['BatchNorm2d'],val=1)
-                ]):
-        super(MobileNetV3,self).__init__(init_cfg)
+                 arch='small',
+                 conv_cfg=None,
+                 norm_cfg=dict(type='BN', eps=0.001, momentum=0.01),
+                 out_indices=None,
+                 frozen_stages=-1,
+                 norm_eval=False,
+                 with_cp=False,
+                 init_cfg=[
+                     dict(
+                         type='Kaiming',
+                         layer=['Conv2d'],
+                         nonlinearity='leaky_relu'),
+                     dict(type='Normal', layer=['Linear'], std=0.01),
+                     dict(type='Constant', layer=['BatchNorm2d'], val=1)
+                 ]):
+        super(MobileNetV3, self).__init__(init_cfg)
         assert arch in self.arch_settings
         if out_indices is None:
-            out_indices = (12,) if arch == 'small' else (16,)
-        for order,index in enumerate(out_indices):
-            if index not in range(0,len(self.arch_settings[arch])+2):
-                raise ValueError(f'the item in out_indices must in the range (0, {len(self.arch_settings[arch])+2}, but received {index}')
+            out_indices = (12, ) if arch == 'small' else (16, )
+        for order, index in enumerate(out_indices):
+            if index not in range(0, len(self.arch_settings[arch]) + 2):
+                raise ValueError(
+                    'the item in out_indices must in '
+                    f'range(0, {len(self.arch_settings[arch]) + 2}). '
+                    f'But received {index}')
 
+        if frozen_stages not in range(-1, len(self.arch_settings[arch]) + 2):
+            raise ValueError('frozen_stages must be in range(-1, '
+                             f'{len(self.arch_settings[arch]) + 2}). '
+                             f'But received {frozen_stages}')
         self.arch = arch
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
@@ -78,11 +105,16 @@ class MobileNetV3(BaseBackbone):
         layer_setting = self.arch_settings[self.arch]
         in_channels = 16
 
-        layer = ConvModule(in_channels=3,out_channels=in_channels,
-                            kernel_size=3,stride=2,padding=1,conv_cfg=self.conv_cfg,
-                            norm_cfg=self.norm_cfg,act_cfg=dict(type='HSwish'))
-
-        self.add_module('layer0',layer)
+        layer = ConvModule(
+            in_channels=3,
+            out_channels=in_channels,
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            conv_cfg=self.conv_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=dict(type='HSwish'))
+        self.add_module('layer0', layer)
         layers.append('layer0')
 
         for i, params in enumerate(layer_setting):
@@ -103,15 +135,15 @@ class MobileNetV3(BaseBackbone):
                 se_cfg = None
 
             layer = InvertedResidual(
-                in_channels=in_channels,#16
-                out_channels=out_channels,#24
-                mid_channels=mid_channels,#72
-                kernel_size=kernel_size,#3
-                stride=stride,#2
-                se_cfg=se_cfg,#True
-                conv_cfg=self.conv_cfg,#
-                norm_cfg=self.norm_cfg,#
-                act_cfg=dict(type=act),#
+                in_channels=in_channels,
+                out_channels=out_channels,
+                mid_channels=mid_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                se_cfg=se_cfg,
+                conv_cfg=self.conv_cfg,
+                norm_cfg=self.norm_cfg,
+                act_cfg=dict(type=act),
                 with_cp=self.with_cp)
             in_channels = out_channels
             layer_name = 'layer{}'.format(i + 1)
@@ -135,7 +167,7 @@ class MobileNetV3(BaseBackbone):
 
         return layers
 
-    def forward(self,x):
+    def forward(self, x):
         outs = []
         for i, layer_name in enumerate(self.layers):
             layer = getattr(self, layer_name)
@@ -147,7 +179,6 @@ class MobileNetV3(BaseBackbone):
             return outs[0]
         else:
             return tuple(outs)
-
 
     def _freeze_stages(self):
         for i in range(0, self.frozen_stages + 1):
@@ -163,6 +194,3 @@ class MobileNetV3(BaseBackbone):
             for m in self.modules():
                 if isinstance(m, _BatchNorm):
                     m.eval()
-
-
-        
