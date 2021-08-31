@@ -1,9 +1,13 @@
+from mmcls.models.utils.helpers import is_tracing
 from mmcls.models.heads import BaseHead
 from mmcls.models.builder import HEADS,build_loss
 from mmcls.models.loss import Accuracy
+from mmcls.models.utils import is_tracing
 
-
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 
 @HEADS.register_module()
 class ClsHead(BaseHead):
@@ -44,3 +48,17 @@ class ClsHead(BaseHead):
     def forward_train(self, cls_score, gt_label):
         losses = self.loss(cls_score, gt_label)
         return losses
+
+    def simple_test(self,cls_score):
+        if isinstance(cls_score, list):
+            cls_score = sum(cls_score) / float(len(cls_score))
+        pred = F.softmax(cls_score, dim=1) if cls_score is not None else None
+        return self.post_process(pred)
+
+    def post_process(self, pred):
+        on_trace = is_tracing()
+        if torch.onnx.is_in_onnx_export() or on_trace:
+            return pred
+        pred = list(pred.detach().cpu().numpy())
+        return pred
+        

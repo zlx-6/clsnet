@@ -1,0 +1,12 @@
+matplotlib
+numpy
+six
+opencv-python
+ruamel.yaml
+termcolor
+tabulate
+addict
+yapf
+terminaltables
+pycocotools
+torchsummaryX

@@ -123,7 +123,7 @@ def main():
         datasets.append(build_dataset(val_dataset))
     if cfg.checkpoint_config is not None:
         #print('111')
-        cfg.checkpoint_config.meat = dict(
+        cfg.checkpoint_config.meta = dict(
             clsnet_version = '0.0.1',
             config = cfg.pretty_text,
             CLASSES =datasets[0].CLASSES
@@ -136,7 +136,7 @@ def main():
         distributed=distributed,
         validate=(not args.no_validate),
         timestamp=timestamp,
-        device='cpu', #if args.device == 'cpu' else 'cuda',
+        device='cpu' if args.device == 'cpu' else 'cuda',
         meta=meta)
 
 

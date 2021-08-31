@@ -73,3 +73,11 @@ class ImageClassifier(BaseClassifier):
         loss.update(loss)
         
         return loss
+
+    def simple_test(self, img, **kwargs):
+        """test without augmentation"""
+        x = self.extract_feat(img)
+        x_dim = len(x.shape)
+        if x_dim ==1:
+            x.unsqueeze_(0)
+        return self.head.simple_test(x)

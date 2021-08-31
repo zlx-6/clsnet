@@ -10,3 +10,8 @@ def mkdir_or_exist(dir_name, mode=0o777):
 def check_file_exist(filename, msg_tmpl='file "{}" does not exist'):
     if not osp.isfile(filename):
         raise FileNotFoundError(msg_tmpl.format(filename))
+
+def symlink(src, dst, overwrite=True, **kwargs):
+    if os.path.lexists(dst) and overwrite:
+        os.remove(dst)
+    os.symlink(src, dst, **kwargs)

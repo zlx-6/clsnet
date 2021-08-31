@@ -37,7 +37,7 @@ class BaseClassifier(BaseModule,metaclass=ABCMeta):
 
         pass
 
-    #@abstractmethod
+    @abstractmethod
     def simple_test(self,imgs,**kwargs):
         pass
     
@@ -96,4 +96,13 @@ class BaseClassifier(BaseModule,metaclass=ABCMeta):
 
         outputs = dict(loss=loss,log_vars=log_vars,num_samples=len(data['img'].data)) 
     
+        return outputs
+
+    def val_step(self,data,optimizer):
+        losses = self(**data)
+        loss, log_vars = self._parse_losses(losses)
+
+        outputs = dict(
+            loss=loss, log_vars=log_vars, num_samples=len(data['img'].data))
+
         return outputs

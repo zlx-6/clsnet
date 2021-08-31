@@ -88,7 +88,7 @@ class BaseRunner(metaclass=ABCMeta):
 
     @property
     def rank(self):
-        self._rank
+        return self._rank
 
     @property
     def world_size(self):
@@ -130,7 +130,7 @@ class BaseRunner(metaclass=ABCMeta):
     def train(self):
         pass
 
-    #@abstractmethod
+    @abstractmethod
     def val(self):
         pass
 
@@ -138,7 +138,7 @@ class BaseRunner(metaclass=ABCMeta):
     def run(self, data_loaders, workflow, **kwargs):
         pass
 
-    #@abstractmethod
+    @abstractmethod
     def save_checkpoint(self,
                         out_dir,
                         filename_tmpl,
