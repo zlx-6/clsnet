@@ -2,9 +2,10 @@
 import torch.nn as nn
 import torch.utils.checkpoint as cp
 
-from mmcls.cvcore.cnn import (ConvModule, build_conv_layer, build_norm_layer,
+from mmcls.cvcore.cnn import (build_conv_layer, build_norm_layer,
                       constant_init)
 from mmcls.cvcore.utils.parrots_wrapper import _BatchNorm
+from mmcls.cvcore.cnn.bricks import ConvModule
 
 from ..builder import BACKBONES
 from .base_backbone import BaseBackbone

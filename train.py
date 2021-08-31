@@ -16,7 +16,7 @@ from mmcls.datasets import build_dataset
 
 def parse_args():
     parser= argparse.ArgumentParser(description="Tran a classification model")
-    parser.add_argument('--config',default='config\mobilenet_v3\mobilenet_v3_small_cifar.py',help ='train config file')
+    parser.add_argument('--config',default='config\\resnet\\resnet18_cifar10.py',help ='train config file')
     parser.add_argument('--work-dir',help='the dir to save the log and models')
     parser.add_argument('--resume-from',help='the checkpoint file to resume from')
     parser.add_argument(
