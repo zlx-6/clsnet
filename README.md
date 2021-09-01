@@ -3,7 +3,7 @@
 
 I will add some networks as follows:
 
-- [x] MobileNetV3
+- [x] [MobileNetV3](https://github.com/zlx-6/clsnet/tree/master/config/mobilenet_v3)
 - [ ] MobileNetV2
 - [ ] VGG
 - [ ] ResNet
