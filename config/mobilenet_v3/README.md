@@ -12,6 +12,6 @@
 
 The result on cifar10:
 
-| Model | paras | FLOPS | top1 | toop5 | logfile | download |
+| Model | paras | FLOPS | top1 | top5 | logfile | download |
 |:-----------------:|:-------:|:-------:|:-------------------:|:--------------:|:------:|:------:|
-|ModelNetv3-small| | | 78.29 | 98.61 | | |
+|ModelNetv3-small| | | 78.29 | 98.61 | [log](https://github.com/zlx-6/clsnet/blob/master/config/mobilenet_v3/mobilenet_v3_small_cifar.py)| |
