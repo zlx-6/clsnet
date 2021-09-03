@@ -31,7 +31,7 @@ def train_model(model,dataset,cfg,distributed=False,validate=False,timestamp=Non
     logger =get_logger(cfg.log_level)
     
     dataset = dataset if isinstance(dataset,(tuple,list)) else [dataset]
-    print(len(cfg.gpu_ids))
+    #print(len(cfg.gpu_ids))
     data_loaders = [
         build_dataloader(ds,
                         cfg.data.samples_per_gpu,

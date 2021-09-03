@@ -37,7 +37,7 @@ test_pipeline = [
     dict(type='Collect', keys=['img'])
 ]
 data = dict(
-    samples_per_gpu=16,
+    samples_per_gpu=128,
     workers_per_gpu=2,
     train=dict(
         type='CIFAR10',
@@ -95,6 +95,6 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 load_from = None
 resume_from = None
-workflow = [('train', 1)]
+workflow = [('val', 1)]
 work_dir = './work_dirs\mobilenet_v3_small_cifar'
 gpu_ids = range(0, 1)
