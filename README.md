@@ -30,5 +30,6 @@ You should clone this repositories and run the follow code:
   
         runner = dict(type='EpochBasedRunner', max_epochs=12),
         data = dict(samples_per_gpu=2,workers_per_gpu=2,)
+## Tools
 
-
+- compute the FLOPS and paras
